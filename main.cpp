@@ -7,12 +7,17 @@
 const int MICROSECONDS_PER_TICK = 300;
 const int NUM_BODIES = 3;
 
+sf::Color darken(sf::Color color)
+{
+	return sf::Color(color.r/2, color.g/2, color.b/2);
+}
+
 void initialize(NBodySystem& system, int width, int height)
 {
 	std::vector<Body> bodies;
 	for(int i = 0; i < NUM_BODIES; ++i)
 	{
-		double radius = std::rand() % 20 + 1;
+		double radius = std::rand() % 15 + 3;
 		double x = std::rand() % (width/2) + (width/4.0);
 		double y = std::rand() % (height/2) + (height/4.0);
 		double vx = (std::rand() % 100) / 100.0;
@@ -38,6 +43,7 @@ void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture
 		circle.setFillColor(body.color);
 		window.draw(circle);
 		circle.scale(0.5, 0.5);
+		circle.setFillColor(darken(body.color));
 		trails.draw(circle);
 	}
 }
