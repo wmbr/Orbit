@@ -41,8 +41,8 @@ NBodySystem::NBodySystem()
 	: bodies()
 {}
 
-Body::Body(double radius, Vector pos, Vector v)
-	: radius(radius), position(pos), velocity(v)
+Body::Body(double radius, Vector pos, Vector velocity, sf::Color color)
+	: radius(radius), position(pos), velocity(velocity), color(color)
 {}
 
 std::vector<Body> NBodySystem::getBodies() const

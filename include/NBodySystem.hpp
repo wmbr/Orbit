@@ -3,6 +3,7 @@
 #include <vector>
 #include <shared_mutex>
 #include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics/Color.hpp>
 
 typedef sf::Vector2<double> Vector;
 
@@ -12,7 +13,8 @@ class Body
         double radius;
         Vector position;
         Vector velocity;
-        Body(double radius, Vector pos, Vector v);
+        sf::Color color;
+        Body(double radius, Vector pos, Vector velocity, sf::Color color);
         double mass() const;
 };
 

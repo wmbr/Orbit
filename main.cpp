@@ -8,21 +8,24 @@ const int MICROSECONDS_PER_TICK = 300;
 void initialize(NBodySystem& system)
 {
     system.setBodies(std::vector<Body>{
-		Body(5, Vector(400, 100), Vector(1.1, 0)),
-		Body(10, Vector(500, 200), Vector(0, 0)),
-		Body(3, Vector(600, 400), Vector(0.9, -0.5)),
+		Body(5, Vector(400, 300), Vector(1.2, 0), sf::Color::Red),
+		Body(10, Vector(500, 400), Vector(0, 0), sf::Color::Yellow),
+		Body(3, Vector(600, 500), Vector(0.9, -0.5), sf::Color::Cyan),
 	});
 	system.nullifySystemVelocity();
 }
 
-void draw(const NBodySystem& system, sf::RenderWindow& window)
+void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails)
 {
 	for(Body body : system.getBodies())
 	{
 		sf::CircleShape circle(body.radius);
 		circle.setPosition(body.position.x - body.radius, body.position.y - body.radius);
-		window.draw(circle);
+		circle.setFillColor(body.color);
+        trails.draw(circle);
 	}
+    sf::Sprite sprite(trails.getTexture());
+    window.draw(sprite);
 }
 
 void tickLoop(NBodySystem& system, const bool& run)
@@ -39,8 +42,19 @@ void tickLoop(NBodySystem& system, const bool& run)
 int main()
 {
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(1900, 1000), "Orbit");
+    sf::VideoMode videoMode = sf::VideoMode::getDesktopMode();
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 8;
+    sf::RenderWindow window(videoMode, "Orbit", sf::Style::Default, settings);
 	window.setFramerateLimit(50);
+
+	sf::RenderTexture trails;
+
+	if(!trails.create(videoMode.width, videoMode.height) || !sf::Shader::isAvailable())
+        return -1;
+
+    trails.clear(sf::Color::Black);
+
 
     NBodySystem system;
     initialize(system);
@@ -63,7 +77,7 @@ int main()
         // Clear screen
         window.clear(sf::Color::Black);
 
-        draw(system, window);
+        draw(system, window, trails);
 
         // Update the window
         window.display();
