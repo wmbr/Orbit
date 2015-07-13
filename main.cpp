@@ -17,15 +17,20 @@ void initialize(NBodySystem& system)
 
 void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails)
 {
+    sf::Sprite sprite(trails.getTexture());
+    sprite.setScale(1, -1);
+    sprite.setPosition(0, trails.getSize().y);
+    window.draw(sprite);
 	for(Body body : system.getBodies())
 	{
 		sf::CircleShape circle(body.radius);
-		circle.setPosition(body.position.x - body.radius, body.position.y - body.radius);
+		circle.setOrigin(body.radius, body.radius);
+		circle.setPosition(body.position.x, body.position.y);
 		circle.setFillColor(body.color);
+        window.draw(circle);
+        circle.scale(0.5, 0.5);
         trails.draw(circle);
 	}
-    sf::Sprite sprite(trails.getTexture());
-    window.draw(sprite);
 }
 
 void tickLoop(NBodySystem& system, const bool& run)
