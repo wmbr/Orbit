@@ -9,13 +9,13 @@ typedef sf::Vector2<double> Vector;
 
 class Body
 {
-    public:
-        double radius;
-        Vector position;
-        Vector velocity;
-        sf::Color color;
-        Body(double radius, Vector pos, Vector velocity, sf::Color color);
-        double mass() const;
+	public:
+		double radius;
+		Vector position;
+		Vector velocity;
+		sf::Color color;
+		Body(double radius, Vector pos, Vector velocity, sf::Color color);
+		double mass() const;
 };
 
 class NBodySystem

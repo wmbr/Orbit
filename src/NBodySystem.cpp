@@ -34,7 +34,7 @@ void NBodySystem::tick(double timedelta)
 	auto excllock = this->lockExclusive();
 	this->bodies = newstate;
 	excllock.unlock();
-    this->checkCollision();
+	this->checkCollision();
 }
 
 NBodySystem::NBodySystem()
