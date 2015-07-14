@@ -1,5 +1,6 @@
-#include "NBodySystem.hpp"
 #include <cmath>
+
+#include "NBodySystem.hpp"
 
 double abs(Vector v)
 {

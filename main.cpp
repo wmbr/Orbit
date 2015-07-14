@@ -6,73 +6,22 @@
 #include <SFML/Graphics.hpp>
 
 #include "NBodySystem.hpp"
+#include "GaussianBlur.hpp"
+#include "util.hpp"
 
-const int MICROSECONDS_PER_TICK = 200;
-const int NUM_BODIES = 3;
-const double TIMEDELTA = 0.05;
-const double TIMEDELTA_TEST = 0.5;
-const int TEST_ITERATIONS = 10000;
-const int MAX_TESTS = 1000;
+
+class ProgramTermination
+{};
 
 sf::Color darken(sf::Color color)
 {
-	return sf::Color(color.r/2, color.g/2, color.b/2, 32);
+	return sf::Color(color.r/2, color.g/2, color.b/2, 64);
 }
 
-NBodySystem initializeSystem(int width, int height)
+void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails, GaussianBlur& blur)
 {
-	NBodySystem system;
-	std::vector<Body> bodies;
-	for(int i = 0; i < NUM_BODIES; ++i)
-	{
-		double radius = std::rand() % 12 + 3;
-		double x = std::rand() % (width/2) + (width/4.0);
-		double y = std::rand() % (height/2) + (height/4.0);
-		double vx = (std::rand() % 100) / 100.0;
-		double vy = (std::rand() % 100) / 100.0;
-		sf::Color color = sf::Color(rand()%255, rand()%255, rand()%255);
-		bodies.push_back(Body(radius, Vector(x, y), Vector(vx, vy), color));
-	}
-	system.setBodies(bodies);
-	system.nullifySystemVelocity();
-	return system;
-}
+	blur.apply(window, trails.getTexture());
 
-bool valid(const NBodySystem& system, int width, int height)
-{
-	return !system.collisionOccured() && system.inArea(0, 0, width, height);
-}
-
-bool test(NBodySystem system, int width, int height)
-{
-	for(int i = 0; i < TEST_ITERATIONS; ++i)
-	{
-		system.tick(TIMEDELTA_TEST);
-		if(!valid(system, width, height))
-			return false;
-	}
-	return true;
-}
-
-NBodySystem generateSystem(int width, int height)
-{
-	for(int i = 0; ; i++)
-	{
-		NBodySystem system = initializeSystem(width, height);
-		if(test(system, width, height) || i > MAX_TESTS)
-			return system;
-	}
-}
-
-
-
-
-void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails)
-{
-	sf::Sprite sprite(trails.getTexture());
-	sprite.setScale(1, -1);
-	sprite.setPosition(0, trails.getSize().y);
-	window.draw(sprite);
 	for(Body body : system.getBodies())
 	{
 		sf::CircleShape circle(body.radius);
@@ -97,11 +46,6 @@ void tickLoop(NBodySystem& system, const bool& run)
 	}
 }
 
-
-
-class ProgramTermination
-{};
-
 void handleEvents(sf::Window& window)
 {
 	sf::Event event;
@@ -120,6 +64,10 @@ void handleEvents(sf::Window& window)
 int main()
 {
 	std::srand(std::time(nullptr));
+	std::thread tickThread;
+	bool runTickThread;
+
+	try	{
 
 	sf::VideoMode videoMode = sf::VideoMode::getDesktopMode();
 	sf::ContextSettings settings;
@@ -129,61 +77,62 @@ int main()
 
 	sf::RenderTexture trails;
 
-	if(!trails.create(videoMode.width, videoMode.height) || !sf::Shader::isAvailable())
-		return -1;
+	if(!trails.create(videoMode.width, videoMode.height))
+		throw std::runtime_error("Could not create RenderTexture");
+
+	GaussianBlur blur;
 
 	NBodySystem system = generateSystem(videoMode.width, videoMode.height);
-	std::thread tickThread;
-	bool runTickThread;
-	try
+
+	while (true)
 	{
-		while (true)
+		trails.clear(sf::Color::Black);
+
+		runTickThread = true;
+		tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
+
+		while(valid(system, videoMode.width, videoMode.height))
 		{
-			trails.clear(sf::Color::Black);
+			handleEvents(window);
 
-			runTickThread = true;
-			tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
+			window.clear(sf::Color::Black);
+			draw(system, window, trails, blur);
 
-			while(valid(system, videoMode.width, videoMode.height))
+			// Update the window
+			window.display();
+		}
+
+		if(!valid(system, videoMode.width, videoMode.height))
+		{
+			sf::Clock clock;
+
+			draw(system, window, trails, blur);
+			window.display();
+
+			//generate new system:
+			auto generationFuture = std::async(std::launch::async, generateSystem, videoMode.width, videoMode.height);
+
+			//terminate tickThread:
+			runTickThread = false;
+			tickThread.join();
+
+			while(clock.getElapsedTime().asMilliseconds() < 3000)
 			{
 				handleEvents(window);
-
-				window.clear(sf::Color::Black);
-				draw(system, window, trails);
-
-				// Update the window
-				window.display();
+				sf::sleep(sf::milliseconds(10));
 			}
-
-			if(!valid(system, videoMode.width, videoMode.height))
-			{
-				sf::Clock clock;
-
-				draw(system, window, trails);
-				window.display();
-
-				//generate new system:
-				auto generationFuture = std::async(std::launch::async, generateSystem, videoMode.width, videoMode.height);
-
-				//terminate tickThread:
-				runTickThread = false;
-				tickThread.join();
-
-				while(clock.getElapsedTime().asMilliseconds() < 3000)
-				{
-					handleEvents(window);
-					sf::sleep(sf::milliseconds(10));
-				}
-				system = generationFuture.get();
-			}
+			system = generationFuture.get();
 		}
 	}
-	catch(ProgramTermination)
-	{
-			//terminate tickThread:
+	} catch(ProgramTermination)	{
+		//terminate tickThread:
 		runTickThread = false;
 		if(tickThread.joinable())
 			tickThread.join();
 		return EXIT_SUCCESS;
+	} catch(std::runtime_error e) {
+		std::cerr << e.what() << std::endl;
+		return EXIT_FAILURE;
 	}
+
 }
