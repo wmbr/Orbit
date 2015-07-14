@@ -6,14 +6,18 @@
 
 const int MICROSECONDS_PER_TICK = 200;
 const int NUM_BODIES = 3;
+const double TIMEDELTA = 0.05;
+const double TIMEDELTA_TEST = 0.5;
+const int TEST_ITERATIONS = 10000;
 
 sf::Color darken(sf::Color color)
 {
 	return sf::Color(color.r/2, color.g/2, color.b/2, 32);
 }
 
-void initialize(NBodySystem& system, int width, int height)
+NBodySystem initializeSystem(int width, int height)
 {
+	NBodySystem system;
 	std::vector<Body> bodies;
 	for(int i = 0; i < NUM_BODIES; ++i)
 	{
@@ -27,7 +31,36 @@ void initialize(NBodySystem& system, int width, int height)
 	}
 	system.setBodies(bodies);
 	system.nullifySystemVelocity();
+	return system;
 }
+
+bool valid(const NBodySystem& system, int width, int height)
+{
+	return !system.collisionOccured() && system.inArea(0, 0, width, height);
+}
+
+bool test(NBodySystem system, int width, int height)
+{
+	for(int i = 0; i < TEST_ITERATIONS; ++i)
+	{
+		system.tick(TIMEDELTA_TEST);
+		if(!valid(system, width, height))
+			return false;
+	}
+	return true;
+}
+
+NBodySystem generateSystem(int width, int height)
+{
+	while(true)
+	{
+		NBodySystem system = initializeSystem(width, height);
+		if(test(system, width, height))
+			return system;
+	}
+}
+
+
 
 
 void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails)
@@ -54,7 +87,7 @@ void tickLoop(NBodySystem& system, const bool& run)
 	while(run)
 	{
 		std::this_thread::sleep_for(std::chrono::microseconds(MICROSECONDS_PER_TICK));
-		system.tick(0.05);
+		system.tick(TIMEDELTA);
 		if(system.collisionOccured())
 			return;
 	}
@@ -80,12 +113,11 @@ int main()
 	{
 		trails.clear(sf::Color::Black);
 
-		NBodySystem system;
-		initialize(system, videoMode.width, videoMode.height);
+		NBodySystem system = generateSystem(videoMode.width, videoMode.height);
 		bool run = true;
 		std::thread tickThread(tickLoop, std::ref(system), std::ref(run));
 
-		while(!system.collisionOccured() && window.isOpen())
+		while(valid(system, videoMode.width, videoMode.height) && window.isOpen())
 		{
 			// Process events
 			sf::Event event;
@@ -107,7 +139,7 @@ int main()
 		run = false;
 		tickThread.join();
 
-		if(system.collisionOccured())
+		if(!valid(system, videoMode.width, videoMode.height))
 		{
 			draw(system, window, trails);
 

@@ -6,9 +6,18 @@ double abs(Vector v)
 	return std::sqrt(std::pow(v.x, 2) + std::pow(v.y, 2));
 }
 
+Body::Body(double radius, Vector pos, Vector velocity, sf::Color color)
+	: radius(radius), position(pos), velocity(velocity), color(color)
+{}
+
 double Body::mass() const
 {
 	return this->radius * this->radius;
+}
+
+bool Body::inArea(double x1, double y1, double x2, double y2) const
+{
+	return x1 < this->position.x+this->radius && x2 > this->position.x-this->radius && y1 < this->position.y+this->radius && y2 > this->position.y-this->radius;
 }
 
 void NBodySystem::tick(double timedelta)
@@ -37,13 +46,13 @@ void NBodySystem::tick(double timedelta)
 	this->checkCollision();
 }
 
-NBodySystem::NBodySystem()
-	: bodies()
-{}
 
-Body::Body(double radius, Vector pos, Vector velocity, sf::Color color)
-	: radius(radius), position(pos), velocity(velocity), color(color)
-{}
+
+NBodySystem::NBodySystem(const NBodySystem& system)
+	: bodies(system.bodies), collision(system.collision)
+{
+}
+
 
 std::vector<Body> NBodySystem::getBodies() const
 {
@@ -116,6 +125,16 @@ void NBodySystem::nullifySystemVelocity()
 	{
 		body.velocity -= v;
 	}
+}
+
+bool NBodySystem::inArea(double x1, double y1, double x2, double y2) const
+{
+	for(Body body : this->bodies)
+	{
+		if(body.inArea(x1, y1, x2, y2))
+			return true;
+	}
+	return false;
 }
 
 

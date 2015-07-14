@@ -16,6 +16,7 @@ class Body
 		sf::Color color;
 		Body(double radius, Vector pos, Vector velocity, sf::Color color);
 		double mass() const;
+		bool inArea(double x1, double y1, double x2, double y2) const;
 };
 
 class NBodySystem
@@ -47,10 +48,12 @@ class NBodySystem
 		void setBodies(const std::vector<Body>& bodies);
 		void tick(double timedelta);
 		bool collisionOccured() const;
-		NBodySystem();
+		NBodySystem() = default;
+		NBodySystem(const NBodySystem& system);
 		Vector getCenterOfMass() const;
 		Vector getSystemVelocity() const;
 		void nullifySystemVelocity();
+		bool inArea(double x1, double y1, double x2, double y2) const;
 };
 
 #endif // NBODYSYSTEM_HPP
