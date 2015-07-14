@@ -50,6 +50,7 @@ class NBodySystem
 		bool collisionOccured() const;
 		NBodySystem() = default;
 		NBodySystem(const NBodySystem& system);
+		NBodySystem& operator=(const NBodySystem&);
 		Vector getCenterOfMass() const;
 		Vector getSystemVelocity() const;
 		void nullifySystemVelocity();

@@ -1,14 +1,18 @@
 #include <thread>
-#include <SFML/Graphics.hpp>
-#include "NBodySystem.hpp"
 #include <iostream>
 #include <cstdlib>
+#include <future>
+
+#include <SFML/Graphics.hpp>
+
+#include "NBodySystem.hpp"
 
 const int MICROSECONDS_PER_TICK = 200;
 const int NUM_BODIES = 3;
 const double TIMEDELTA = 0.05;
 const double TIMEDELTA_TEST = 0.5;
 const int TEST_ITERATIONS = 10000;
+const int MAX_TESTS = 1000;
 
 sf::Color darken(sf::Color color)
 {
@@ -52,10 +56,10 @@ bool test(NBodySystem system, int width, int height)
 
 NBodySystem generateSystem(int width, int height)
 {
-	while(true)
+	for(int i = 0; ; i++)
 	{
 		NBodySystem system = initializeSystem(width, height);
-		if(test(system, width, height))
+		if(test(system, width, height) || i > MAX_TESTS)
 			return system;
 	}
 }
@@ -93,10 +97,30 @@ void tickLoop(NBodySystem& system, const bool& run)
 	}
 }
 
+
+
+class ProgramTermination
+{};
+
+void handleEvents(sf::Window& window)
+{
+	sf::Event event;
+	while (window.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+		{
+			window.close();
+			throw ProgramTermination();
+		}
+	}
+}
+
+
+
 int main()
 {
 	std::srand(std::time(nullptr));
-	// Create the main window
+
 	sf::VideoMode videoMode = sf::VideoMode::getDesktopMode();
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
@@ -108,46 +132,58 @@ int main()
 	if(!trails.create(videoMode.width, videoMode.height) || !sf::Shader::isAvailable())
 		return -1;
 
-
-	while (window.isOpen())
+	NBodySystem system = generateSystem(videoMode.width, videoMode.height);
+	std::thread tickThread;
+	bool runTickThread;
+	try
 	{
-		trails.clear(sf::Color::Black);
-
-		NBodySystem system = generateSystem(videoMode.width, videoMode.height);
-		bool run = true;
-		std::thread tickThread(tickLoop, std::ref(system), std::ref(run));
-
-		while(valid(system, videoMode.width, videoMode.height) && window.isOpen())
+		while (true)
 		{
-			// Process events
-			sf::Event event;
-			while (window.pollEvent(event))
+			trails.clear(sf::Color::Black);
+
+			runTickThread = true;
+			tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
+
+			while(valid(system, videoMode.width, videoMode.height))
 			{
-				// Close window : exit
-				if (event.type == sf::Event::Closed)
-					window.close();
+				handleEvents(window);
+
+				window.clear(sf::Color::Black);
+				draw(system, window, trails);
+
+				// Update the window
+				window.display();
 			}
 
-			// Clear screen
-			window.clear(sf::Color::Black);
+			if(!valid(system, videoMode.width, videoMode.height))
+			{
+				sf::Clock clock;
 
-			draw(system, window, trails);
+				draw(system, window, trails);
+				window.display();
 
-			// Update the window
-			window.display();
-		}
-		run = false;
-		tickThread.join();
+				//generate new system:
+				auto generationFuture = std::async(std::launch::async, generateSystem, videoMode.width, videoMode.height);
 
-		if(!valid(system, videoMode.width, videoMode.height))
-		{
-			draw(system, window, trails);
+				//terminate tickThread:
+				runTickThread = false;
+				tickThread.join();
 
-			// Update the window
-			window.display();
-			sf::sleep(sf::seconds(3));
+				while(clock.getElapsedTime().asMilliseconds() < 3000)
+				{
+					handleEvents(window);
+					sf::sleep(sf::milliseconds(10));
+				}
+				system = generationFuture.get();
+			}
 		}
 	}
-
-	return EXIT_SUCCESS;
+	catch(ProgramTermination)
+	{
+			//terminate tickThread:
+		runTickThread = false;
+		if(tickThread.joinable())
+			tickThread.join();
+		return EXIT_SUCCESS;
+	}
 }

@@ -53,6 +53,13 @@ NBodySystem::NBodySystem(const NBodySystem& system)
 {
 }
 
+NBodySystem& NBodySystem::operator=(const NBodySystem& system)
+{
+	this->bodies = system.bodies;
+	this->collision = system.collision;
+	return *this;
+}
+
 
 std::vector<Body> NBodySystem::getBodies() const
 {
