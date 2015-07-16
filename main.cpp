@@ -66,6 +66,7 @@ int main()
 	std::srand(std::time(nullptr));
 	std::thread tickThread;
 	bool runTickThread;
+	NBodySystem system;
 
 	try	{
 
@@ -82,7 +83,7 @@ int main()
 
 	GaussianBlur blur;
 
-	NBodySystem system = generateSystem(videoMode.width, videoMode.height);
+	system = generateSystem(videoMode.width, videoMode.height);
 
 	while (true)
 	{
@@ -106,15 +107,16 @@ int main()
 		{
 			sf::Clock clock;
 
+			//terminate tickThread:
+			runTickThread = false;
+
 			draw(system, window, trails, blur);
 			window.display();
 
+			tickThread.join();
+
 			//generate new system:
 			auto generationFuture = std::async(std::launch::async, generateSystem, videoMode.width, videoMode.height);
-
-			//terminate tickThread:
-			runTickThread = false;
-			tickThread.join();
 
 			while(clock.getElapsedTime().asMilliseconds() < 3000)
 			{
