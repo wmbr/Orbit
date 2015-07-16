@@ -45,9 +45,13 @@
 		<Linker>
 			<Add option="-pthread" />
 		</Linker>
+		<Unit filename="include/GaussianBlur.hpp" />
 		<Unit filename="include/NBodySystem.hpp" />
+		<Unit filename="include/util.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/GaussianBlur.cpp" />
 		<Unit filename="src/NBodySystem.cpp" />
+		<Unit filename="src/util.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
