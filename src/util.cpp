@@ -1,5 +1,10 @@
 #include "util.hpp"
 
+float brightness(sf::Color color)
+{
+	return 0.3*color.r + 0.6*color.g + 0.1*color.b;
+}
+
 NBodySystem initializeSystem(int width, int height)
 {
 	NBodySystem system;
@@ -11,13 +16,18 @@ NBodySystem initializeSystem(int width, int height)
 		double y = std::rand() % (height/2) + (height/4.0);
 		double vx = (std::rand() % 100) / 100.0;
 		double vy = (std::rand() % 100) / 100.0;
-		sf::Color color = sf::Color(rand()%255, rand()%255, rand()%255);
+		sf::Color color;
+		do{
+			color = sf::Color(rand()%255, rand()%255, rand()%255);
+		}while(radius * brightness(color) < 500); //avoid hard to see bodies
 		bodies.push_back(Body(radius, Vector(x, y), Vector(vx, vy), color));
 	}
 	system.setBodies(bodies);
 	system.nullifySystemVelocity();
 	return system;
 }
+
+
 
 bool valid(const NBodySystem& system, int width, int height)
 {

@@ -15,7 +15,7 @@ class ProgramTermination
 
 sf::Color darken(sf::Color color)
 {
-	return sf::Color(color.r/2, color.g/2, color.b/2, 64);
+	return sf::Color(color.r/2, color.g/2, color.b/2, 128);
 }
 
 void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails, GaussianBlur& blur)
