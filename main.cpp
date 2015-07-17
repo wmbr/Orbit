@@ -75,6 +75,7 @@ int main()
 	settings.antialiasingLevel = 8;
 	sf::RenderWindow window(videoMode, "Orbit", sf::Style::Default, settings);
 	window.setFramerateLimit(120);
+	sf::Vector2u size = window.getSize();
 
 	sf::RenderTexture trails;
 
@@ -83,7 +84,7 @@ int main()
 
 	GaussianBlur blur;
 
-	system = generateSystem(videoMode.width, videoMode.height);
+	system = generateSystem(size);
 
 	while (true)
 	{
@@ -92,36 +93,42 @@ int main()
 		runTickThread = true;
 		tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
 
-		while(valid(system, videoMode.width, videoMode.height))
+		while(valid(system, size))
 		{
 			handleEvents(window);
 
-			window.clear(sf::Color::Black);
+			window.clear();
 			draw(system, window, trails, blur);
 
 			// Update the window
 			window.display();
 		}
 
-		if(!valid(system, videoMode.width, videoMode.height))
+		if(!valid(system, size))
 		{
 			sf::Clock clock;
 
 			//terminate tickThread:
 			runTickThread = false;
 
-			draw(system, window, trails, blur);
-			window.display();
+			//generate new system:
+			auto generationFuture = std::async(std::launch::async, generateSystem, size);
 
 			tickThread.join();
 
-			//generate new system:
-			auto generationFuture = std::async(std::launch::async, generateSystem, videoMode.width, videoMode.height);
-
+			sf::RectangleShape fadeRect = sf::RectangleShape(sf::Vector2f(size));
 			while(clock.getElapsedTime().asMilliseconds() < 3000)
 			{
 				handleEvents(window);
-				sf::sleep(sf::milliseconds(10));
+
+				window.clear();
+				draw(system, window, trails, blur);
+
+				sf::Color fadeBlack = sf::Color(0, 0, 0, std::min(255, clock.getElapsedTime().asMilliseconds()/10));
+				fadeRect.setFillColor(fadeBlack);
+				window.draw(fadeRect);
+
+				window.display();
 			}
 			system = generationFuture.get();
 		}

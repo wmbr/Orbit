@@ -11,12 +11,12 @@ const int TEST_ITERATIONS = 20000;
 const int MAX_TESTS = 1000;
 
 
-NBodySystem initializeSystem(int width, int height);
+NBodySystem initializeSystem(sf::Vector2u size);
 
-bool valid(const NBodySystem& system, int width, int height);
+bool valid(const NBodySystem& system, sf::Vector2u size);
 
-bool test(NBodySystem system, int width, int height);
+bool test(NBodySystem system, sf::Vector2u size);
 
-NBodySystem generateSystem(int width, int height);
+NBodySystem generateSystem(sf::Vector2u size);
 
 #endif // UTIL_HPP_INCLUDED

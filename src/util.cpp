@@ -1,3 +1,5 @@
+#include <SFML/System/Vector2.hpp>
+
 #include "util.hpp"
 
 float brightness(sf::Color color)
@@ -5,15 +7,15 @@ float brightness(sf::Color color)
 	return 0.3*color.r + 0.6*color.g + 0.1*color.b;
 }
 
-NBodySystem initializeSystem(int width, int height)
+NBodySystem initializeSystem(sf::Vector2u size)
 {
 	NBodySystem system;
 	std::vector<Body> bodies;
 	for(int i = 0; i < NUM_BODIES; ++i)
 	{
 		double radius = std::rand() % 12 + 3;
-		double x = std::rand() % (width/2) + (width/4.0);
-		double y = std::rand() % (height/2) + (height/4.0);
+		double x = std::rand() % (size.x/2) + (size.x/4.0);
+		double y = std::rand() % (size.y/2) + (size.y/4.0);
 		double vx = (std::rand() % 100) / 100.0;
 		double vy = (std::rand() % 100) / 100.0;
 		sf::Color color;
@@ -29,28 +31,28 @@ NBodySystem initializeSystem(int width, int height)
 
 
 
-bool valid(const NBodySystem& system, int width, int height)
+bool valid(const NBodySystem& system, sf::Vector2u size)
 {
-	return !system.collisionOccured() && system.inArea(0, 0, width, height);
+	return !system.collisionOccured() && system.inArea(0, 0, size.x, size.y);
 }
 
-bool test(NBodySystem system, int width, int height)
+bool test(NBodySystem system, sf::Vector2u size)
 {
 	for(int i = 0; i < TEST_ITERATIONS; ++i)
 	{
 		system.tick(TIMEDELTA_TEST);
-		if(!valid(system, width, height))
+		if(!valid(system, size))
 			return false;
 	}
 	return true;
 }
 
-NBodySystem generateSystem(int width, int height)
+NBodySystem generateSystem(sf::Vector2u size)
 {
 	for(int i = 0; ; i++)
 	{
-		NBodySystem system = initializeSystem(width, height);
-		if(test(system, width, height) || i > MAX_TESTS)
+		NBodySystem system = initializeSystem(size);
+		if(test(system, size) || i > MAX_TESTS)
 			return system;
 	}
 }
