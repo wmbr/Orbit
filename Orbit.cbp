@@ -44,6 +44,10 @@
 		</Compiler>
 		<Linker>
 			<Add option="-pthread" />
+			<Add option="-Wl,--format=binary" />
+			<Add option="-Wl,shaders/gaussianBlur_fs.glsl" />
+			<Add option="-Wl,shaders/tint_fs.glsl" />
+			<Add option="-Wl,--format=default" />
 		</Linker>
 		<Unit filename="include/GaussianBlur.hpp" />
 		<Unit filename="include/NBodySystem.hpp" />
