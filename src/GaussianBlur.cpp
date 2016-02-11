@@ -19,6 +19,7 @@ void GaussianBlur::apply(sf::RenderTarget& target, const sf::Texture& source)
 	sf::Sprite sprite(source);
 	this->shader.setParameter("direction", sf::Vector2f(1.0, 0));
 	tmp.draw(sprite, &this->shader);
+	tmp.display();
 
 	//2nd pass: vertical blur
 	sprite.setTexture(tmp.getTexture());

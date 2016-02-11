@@ -33,6 +33,7 @@ void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture
 		circle.setFillColor(darken(body.color));
 		trails.draw(circle);
 	}
+	trails.display();
 }
 
 void tickLoop(NBodySystem& system, const bool& run)
@@ -89,6 +90,7 @@ int main()
 	while (true)
 	{
 		trails.clear(sf::Color::Black);
+		trails.display();
 
 		runTickThread = true;
 		tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
