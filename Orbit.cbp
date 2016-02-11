@@ -47,9 +47,13 @@
 		</Linker>
 		<Unit filename="include/GaussianBlur.hpp" />
 		<Unit filename="include/NBodySystem.hpp" />
+		<Unit filename="include/Tint.hpp" />
 		<Unit filename="include/util.hpp" />
+		<Unit filename="shaders/gaussianBlur_fs.glsl" />
+		<Unit filename="shaders/tint_fs.glsl" />
 		<Unit filename="src/GaussianBlur.cpp" />
 		<Unit filename="src/NBodySystem.cpp" />
+		<Unit filename="src/Tint.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/util.cpp" />
 		<Extensions>

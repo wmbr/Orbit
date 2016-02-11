@@ -7,6 +7,7 @@
 
 #include "NBodySystem.hpp"
 #include "GaussianBlur.hpp"
+#include "Tint.hpp"
 #include "util.hpp"
 
 
@@ -33,6 +34,12 @@ void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture
 		circle.setFillColor(darken(body.color));
 		trails.draw(circle);
 	}
+	trails.display();
+}
+
+void fadeTrails(sf::RenderTexture& trails, Tint& fadeTint)
+{
+	fadeTint.apply(trails, trails.getTexture());
 	trails.display();
 }
 
@@ -84,6 +91,7 @@ int main()
 		throw std::runtime_error("Could not create RenderTexture");
 
 	GaussianBlur blur;
+	Tint fadeTint(sf::Color::Black);
 
 	system = generateSystem(size);
 
@@ -95,10 +103,15 @@ int main()
 		runTickThread = true;
 		tickThread = std::thread(tickLoop, std::ref(system), std::ref(runTickThread));
 
+		unsigned int count = 0;
 		while(valid(system, size))
 		{
 			handleEvents(window);
 
+
+			++count;
+			if(count % TRAIL_FADETIME == 0)
+				fadeTrails(trails, fadeTint);
 			window.clear();
 			draw(system, window, trails, blur);
 
