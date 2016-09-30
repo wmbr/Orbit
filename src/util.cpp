@@ -2,6 +2,12 @@
 
 #include "util.hpp"
 
+
+sf::Color darken(sf::Color color)
+{
+	return sf::Color(color.r/2, color.g/2, color.b/2, 128);
+}
+
 float brightness(sf::Color color)
 {
 	return 0.3*color.r + 0.6*color.g + 0.1*color.b;
