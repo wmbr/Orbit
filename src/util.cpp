@@ -8,6 +8,15 @@ sf::Color darken(sf::Color color)
 	return sf::Color(color.r/2, color.g/2, color.b/2, 128);
 }
 
+sf::Color randomColor(double bodyRadius)
+{
+	sf::Color color;
+	do{
+		color = sf::Color(rand()%255, rand()%255, rand()%255);
+	}while(bodyRadius * brightness(color) < 500); //avoid hard to see bodies
+	return color;
+}
+
 float brightness(sf::Color color)
 {
 	return 0.3*color.r + 0.6*color.g + 0.1*color.b;
@@ -24,11 +33,7 @@ NBodySystem initializeSystem(sf::Vector2u size)
 		double y = std::rand() % (size.y/2) + (size.y/4.0);
 		double vx = (std::rand() % 100) / 100.0;
 		double vy = (std::rand() % 100) / 100.0;
-		sf::Color color;
-		do{
-			color = sf::Color(rand()%255, rand()%255, rand()%255);
-		}while(radius * brightness(color) < 500); //avoid hard to see bodies
-		bodies.push_back(Body(radius, Vector(x, y), Vector(vx, vy), color));
+		bodies.push_back(Body(radius, Vector(x, y), Vector(vx, vy), randomColor(radius)));
 	}
 	system.setBodies(bodies);
 	system.nullifySystemVelocity();
@@ -39,7 +44,7 @@ NBodySystem initializeSystem(sf::Vector2u size)
 
 bool valid(const NBodySystem& system, sf::Vector2u size)
 {
-	return !system.collisionOccured() && system.inArea(0, 0, size.x, size.y);
+	return !system.simulationTerminated() && system.inArea(0, 0, size.x, size.y);
 }
 
 bool test(NBodySystem system, sf::Vector2u size)

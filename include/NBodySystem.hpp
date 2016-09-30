@@ -21,12 +21,37 @@ class Body
 
 class NBodySystem
 {
+	public:
+		/**
+		 * How to handle body collsions.
+		 */
+		enum class CollisionBehaviour
+		{
+			TERMINATE, ///< terminate simulation
+			MERGE,     ///< merge colliding bodies
+			DELETE,    ///< delete colliding bodies
+			IGNORE     ///< ignore collisions (might cause rounding errors)
+		};
+		std::vector<Body> getBodies() const;
+		void setBodies(const std::vector<Body>& bodies);
+		void tick(double timedelta);
+		bool simulationTerminated() const;
+		NBodySystem() = default;
+		NBodySystem(const NBodySystem& system);
+		NBodySystem& operator=(const NBodySystem&);
+		Vector getCenterOfMass() const;
+		Vector getSystemVelocity() const;
+		void nullifySystemVelocity();
+		bool inArea(double x1, double y1, double x2, double y2) const;
+
 	private:
 		std::vector<Body> bodies;
 		mutable std::shared_timed_mutex readMutex;
 		std::mutex writeMutex;
-		bool collision = false;
-		bool checkCollision();
+		CollisionBehaviour collisionBehaviour = CollisionBehaviour::TERMINATE;
+		bool stopSimulation = false;
+		void handleCollisions(std::vector<Body>& bodies);
+		Body mergeBodies(const Body& b1, const Body& b2) const;
 
 		/**
 		 * Aquire before reading from this->bodies.
@@ -42,19 +67,6 @@ class NBodySystem
 		 * Aquire to prevent further writes to this->bodies.
 		 */
 		std::unique_lock<std::mutex> announceWrite();
-
-	public:
-		std::vector<Body> getBodies() const;
-		void setBodies(const std::vector<Body>& bodies);
-		void tick(double timedelta);
-		bool collisionOccured() const;
-		NBodySystem() = default;
-		NBodySystem(const NBodySystem& system);
-		NBodySystem& operator=(const NBodySystem&);
-		Vector getCenterOfMass() const;
-		Vector getSystemVelocity() const;
-		void nullifySystemVelocity();
-		bool inArea(double x1, double y1, double x2, double y2) const;
 };
 
 #endif // NBODYSYSTEM_HPP

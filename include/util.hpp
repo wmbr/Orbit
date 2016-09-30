@@ -20,4 +20,10 @@ bool test(NBodySystem system, sf::Vector2u size);
 
 NBodySystem generateSystem(sf::Vector2u size);
 
+sf::Color darken(sf::Color color);
+
+sf::Color randomColor(double bodyRadius);
+
+float brightness(sf::Color color);
+
 #endif // UTIL_HPP_INCLUDED

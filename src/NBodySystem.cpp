@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "NBodySystem.hpp"
+#include "util.hpp"
 
 double abs(Vector v)
 {
@@ -23,10 +24,9 @@ bool Body::inArea(double x1, double y1, double x2, double y2) const
 
 void NBodySystem::tick(double timedelta)
 {
-	auto writelock = this->announceWrite();
-	auto readlock = this->lockShared();
-	if(this->collisionOccured())
+	if(this->stopSimulation)
 		return;
+	auto writelock = this->announceWrite();
 	auto newstate = this->bodies;
 	for(std::size_t i = 0; i < newstate.size(); ++i)
 	{
@@ -40,17 +40,15 @@ void NBodySystem::tick(double timedelta)
 			newstate[i].velocity += timedelta * m / std::pow(abs(d), 3) * d;
 		}
 	}
-	readlock.unlock();
+	this->handleCollisions(newstate);
 	auto excllock = this->lockExclusive();
 	this->bodies = newstate;
-	excllock.unlock();
-	this->checkCollision();
 }
 
 
 
 NBodySystem::NBodySystem(const NBodySystem& system)
-	: bodies(system.bodies), collision(system.collision)
+	: bodies(system.bodies), collisionBehaviour(system.collisionBehaviour), stopSimulation(system.stopSimulation)
 {
 }
 
@@ -59,7 +57,8 @@ NBodySystem& NBodySystem::operator=(const NBodySystem& system)
 	auto writelock = this->announceWrite();
 	auto excllock = this->lockExclusive();
 	this->bodies = system.bodies;
-	this->collision = system.collision;
+	this->collisionBehaviour = system.collisionBehaviour;
+	this->stopSimulation = system.stopSimulation;
 	return *this;
 }
 
@@ -75,31 +74,58 @@ void NBodySystem::setBodies(const std::vector<Body>& bodies)
 	auto writelock = this->announceWrite();
 	auto excllock = this->lockExclusive();
 	this->bodies = bodies;
-	this->collision = false;
+	this->stopSimulation = false;
 }
 
-bool NBodySystem::checkCollision()
+void NBodySystem::handleCollisions(std::vector<Body>& bodies)
 {
-	auto lock = this->lockShared();
-	for(std::size_t i = 0; i < this->bodies.size(); ++i)
+	if(this->collisionBehaviour == CollisionBehaviour::IGNORE)
+		return;
+	for(std::size_t i = 0; i < bodies.size(); ++i)
 	{
-		for(std::size_t j = 0; j < this->bodies.size(); ++j)
+		for(std::size_t j = 0; j < bodies.size() && i < bodies.size(); ++j)
 		{
 			if(i == j)
 				continue;
-			if(abs(this->bodies[i].position - this->bodies[j].position) < (this->bodies[i].radius + this->bodies[j].radius))
+			if(abs(bodies[i].position - bodies[j].position) < (bodies[i].radius + bodies[j].radius))
 			{
-				this->collision = true;
-				return true;
+				switch(this->collisionBehaviour)
+				{
+					case CollisionBehaviour::TERMINATE:
+						this->stopSimulation = true;
+						return;
+					case CollisionBehaviour::MERGE:
+						bodies.push_back(this->mergeBodies(bodies[i], bodies[j]));
+						//fallthrough
+					case CollisionBehaviour::DELETE:
+						bodies.erase(bodies.begin()+i);
+						bodies.erase(bodies.begin()+j);
+						if(bodies.size() <= 1)
+						{
+							this->stopSimulation = true;
+							return;
+						}
+						j = -1; //bodies[i] is now the next body, so we need to restart at j=0
+						break;
+					case CollisionBehaviour::IGNORE:
+						break;
+				}
 			}
 		}
 	}
-	return false;
 }
 
-bool NBodySystem::collisionOccured() const
+Body NBodySystem::mergeBodies(const Body& b1, const Body& b2) const
 {
-	return this->collision;
+	double radius = std::sqrt(b1.mass() + b2.mass());
+	Vector pos = (b1.mass() * b1.position + b2.mass() * b2.position) / (b1.mass() + b2.mass());
+	Vector v = (b1.mass() * b1.velocity + b2.mass() * b2.velocity) / (b1.mass() + b2.mass());
+	return Body(radius, pos, v, randomColor(radius));
+}
+
+bool NBodySystem::simulationTerminated() const
+{
+	return this->stopSimulation;
 }
 
 Vector NBodySystem::getCenterOfMass() const

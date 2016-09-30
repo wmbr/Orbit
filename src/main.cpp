@@ -43,7 +43,7 @@ void tickLoop(NBodySystem& system, const bool& run)
 	{
 		std::this_thread::sleep_for(std::chrono::microseconds(MICROSECONDS_PER_TICK));
 		system.tick(TIMEDELTA);
-		if(system.collisionOccured())
+		if(system.simulationTerminated())
 			return;
 	}
 }
