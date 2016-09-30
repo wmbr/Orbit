@@ -56,6 +56,8 @@ NBodySystem::NBodySystem(const NBodySystem& system)
 
 NBodySystem& NBodySystem::operator=(const NBodySystem& system)
 {
+	auto writelock = this->announceWrite();
+	auto excllock = this->lockExclusive();
 	this->bodies = system.bodies;
 	this->collision = system.collision;
 	return *this;
@@ -137,6 +139,7 @@ void NBodySystem::nullifySystemVelocity()
 
 bool NBodySystem::inArea(double x1, double y1, double x2, double y2) const
 {
+	auto lock = this->lockShared();
 	for(Body body : this->bodies)
 	{
 		if(body.inArea(x1, y1, x2, y2))
