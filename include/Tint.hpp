@@ -3,17 +3,15 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Shader.hpp"
 
-class Tint{
+class Tint : public Shader{
 	private:
 		sf::Shader shader;
 		sf::RenderTexture tmp;
 	public:
 		Tint(const sf::Color& color);
-		/**
-		 * If intermediaryCopy is false, source and target may not refer to the same texture
-		 */
-		void apply(sf::RenderTarget& target, const sf::Texture& source, bool intermediaryCopy = true);
+		void apply(sf::RenderTarget& target, const sf::Texture& source);
 };
 
 #endif // TINT_HPP

@@ -16,19 +16,16 @@ Tint::Tint(const sf::Color& color)
 	this->shader.setParameter("color", color);
 }
 
-void Tint::apply(sf::RenderTarget& target, const sf::Texture& source, bool intermediaryCopy)
+void Tint::apply(sf::RenderTarget& target, const sf::Texture& source)
 {
 	sf::Sprite sprite(source);
-	if(intermediaryCopy)
-	{
-		if(this->tmp.getSize() != source.getSize())
-			if(!this->tmp.create(source.getSize().x, source.getSize().y))
-				throw std::runtime_error("Could not create RenderTexture");
+	if(this->tmp.getSize() != source.getSize())
+		if(!this->tmp.create(source.getSize().x, source.getSize().y))
+			throw std::runtime_error("Could not create RenderTexture");
 
 
-		tmp.draw(sprite);
-		tmp.display();
-		sprite.setTexture(tmp.getTexture());
-	}
+	tmp.draw(sprite);
+	tmp.display();
+	sprite.setTexture(tmp.getTexture());
 	target.draw(sprite , &this->shader);
 }

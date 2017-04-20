@@ -3,7 +3,9 @@
 
 #include <SFML/Graphics.hpp>
 
-class GaussianBlur{
+#include "Shader.hpp"
+
+class GaussianBlur : public Shader{
 	private:
 		sf::Shader shader;
 		sf::RenderTexture tmp;

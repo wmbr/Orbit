@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Shader.hpp"
 #include "NBodySystem.hpp"
 #include "GaussianBlur.hpp"
 #include "Tint.hpp"
@@ -13,7 +14,7 @@
 class ProgramTermination
 {};
 
-void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails, GaussianBlur& blur)
+void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture& trails, Shader& blur)
 {
 	blur.apply(window, trails.getTexture());
 
@@ -31,7 +32,7 @@ void draw(const NBodySystem& system, sf::RenderWindow& window, sf::RenderTexture
 	trails.display();
 }
 
-void fadeTrails(sf::RenderTexture& trails, Tint& fadeTint)
+void fadeTrails(sf::RenderTexture& trails, Shader& fadeTint)
 {
 	fadeTint.apply(trails, trails.getTexture());
 	trails.display();
@@ -84,8 +85,14 @@ int main()
 	if(!trails.create(videoMode.width, videoMode.height))
 		throw std::runtime_error("Could not create RenderTexture");
 
-	GaussianBlur blur;
-	Tint fadeTint(sf::Color::Black);
+	std::unique_ptr<Shader> blur, fadeTint;
+	try {
+		blur = std::unique_ptr<GaussianBlur>(new GaussianBlur());
+		fadeTint = std::unique_ptr<Tint>(new Tint(sf::Color::Black));
+	} catch(std::runtime_error) {
+		blur = std::unique_ptr<Shader>(new NullShader());
+		fadeTint = std::unique_ptr<Shader>(new NullShader());
+	}
 
 	system = generateSystem(size);
 
@@ -105,9 +112,9 @@ int main()
 
 			++count;
 			if(count % TRAIL_FADETIME == 0)
-				fadeTrails(trails, fadeTint);
+				fadeTrails(trails, *fadeTint.get());
 			window.clear();
-			draw(system, window, trails, blur);
+			draw(system, window, trails, *blur.get());
 
 			// Update the window
 			window.display();
@@ -131,7 +138,7 @@ int main()
 				handleEvents(window);
 
 				window.clear();
-				draw(system, window, trails, blur);
+				draw(system, window, trails, *blur.get());
 
 				sf::Color fadeBlack = sf::Color(0, 0, 0, std::min(255, clock.getElapsedTime().asMilliseconds()/10));
 				fadeRect.setFillColor(fadeBlack);
