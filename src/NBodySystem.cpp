@@ -83,10 +83,8 @@ void NBodySystem::handleCollisions(std::vector<Body>& bodies)
 		return;
 	for(std::size_t i = 0; i < bodies.size(); ++i)
 	{
-		for(std::size_t j = 0; j < bodies.size() && i < bodies.size(); ++j)
+		for(std::size_t j = i+1; j < bodies.size() && i < bodies.size(); ++j)
 		{
-			if(i == j)
-				continue;
 			if(abs(bodies[i].position - bodies[j].position) < (bodies[i].radius + bodies[j].radius))
 			{
 				switch(this->collisionBehaviour)
@@ -98,14 +96,14 @@ void NBodySystem::handleCollisions(std::vector<Body>& bodies)
 						bodies.push_back(this->mergeBodies(bodies[i], bodies[j]));
 						//fallthrough
 					case CollisionBehaviour::DELETE:
-						bodies.erase(bodies.begin()+i);
 						bodies.erase(bodies.begin()+j);
+						bodies.erase(bodies.begin()+i);
 						if(bodies.size() <= 1)
 						{
 							this->stopSimulation = true;
 							return;
 						}
-						j = -1; //bodies[i] is now the next body, so we need to restart at j=0
+						j = i; //bodies[i] is now the next body, so we need to restart at j=i+1
 						break;
 					case CollisionBehaviour::IGNORE:
 						break;
