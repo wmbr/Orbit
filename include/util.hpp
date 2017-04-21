@@ -10,6 +10,7 @@ const double TIMEDELTA_TEST = 0.1;
 const int TEST_ITERATIONS = 20000;
 const int MAX_TESTS = 1000;
 const int TRAIL_FADETIME = 50;
+const double GRAVITY_CONSTANT = 1;
 
 
 NBodySystem initializeSystem(sf::Vector2u size);

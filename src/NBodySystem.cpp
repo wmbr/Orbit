@@ -37,7 +37,7 @@ void NBodySystem::tick(double timedelta)
 				continue;
 			auto m = this->bodies[j].mass();
 			Vector d = this->bodies[j].position - this->bodies[i].position;
-			newstate[i].velocity += timedelta * m / std::pow(abs(d), 3) * d;
+			newstate[i].velocity += timedelta * GRAVITY_CONSTANT * m / std::pow(abs(d), 3) * d;
 		}
 	}
 	this->handleCollisions(newstate);
@@ -118,7 +118,8 @@ Body NBodySystem::mergeBodies(const Body& b1, const Body& b2) const
 	double radius = std::sqrt(b1.mass() + b2.mass());
 	Vector pos = (b1.mass() * b1.position + b2.mass() * b2.position) / (b1.mass() + b2.mass());
 	Vector v = (b1.mass() * b1.velocity + b2.mass() * b2.velocity) / (b1.mass() + b2.mass());
-	return Body(radius, pos, v, randomColor(radius));
+	sf::Color color = b1.mass() > b2.mass() ? b1.color : b2.color;
+	return Body(radius, pos, v, color);
 }
 
 bool NBodySystem::simulationTerminated() const
